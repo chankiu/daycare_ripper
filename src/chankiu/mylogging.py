@@ -1,5 +1,5 @@
 import logging
-
+from logging.handlers import RotatingFileHandler
 
 def log(app_name):
     # create logger with 'app_name'
@@ -7,7 +7,7 @@ def log(app_name):
     logger.setLevel(logging.DEBUG)
 
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('app_name.log')
+    fh = RotatingFileHandler(filename='app_name.log', maxBytes=2048, backupCount=3)
     fh.setLevel(logging.DEBUG)
 
     # create console handler with a higher log level
