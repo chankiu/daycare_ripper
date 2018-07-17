@@ -40,8 +40,26 @@ def get_az_links(index_url, log):
 def get_details(url, log):
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
+    content = soup.find(class_='content-page')
 
-    return soup.findAll(class_='content-page')
+    name = chankiu.strip_tags(content.find("h2").contents[0])
+    address = chankiu.strip_tags(content.p.next)
+    intro = content.findAll("p")[1].contents
+    toddler_rating = 0
+    contact_info = ""
+    more_info = ""
+    program_support = ""
+
+    return {'name': name,
+            'address': address,
+            'intro': intro,
+            'toddler_rating': toddler_rating,
+            'contact_info': contact_info,
+            'more_info': more_info,
+            'program_support': program_support,
+            'content': content
+            }
+
 
 
 if __name__ == "__main__":
