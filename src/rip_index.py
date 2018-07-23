@@ -4,6 +4,9 @@ import requests
 import re
 import os
 
+from scrapy.selector import Selector
+from scrapy.http import HtmlResponse
+
 import chankiu
 log = chankiu.log(sys.argv[0])
 
@@ -42,21 +45,26 @@ def get_details(url, log):
     soup = BeautifulSoup(r.text, 'html.parser')
     content = soup.find(class_='content-page')
 
-    name = chankiu.strip_tags(content.find("h2").contents[0])
-    address = chankiu.strip_tags(content.p.next)
-    intro = content.findAll("p")[1].contents
-    toddler_rating = 0
-    contact_info = ""
-    more_info = ""
-    program_support = ""
+    name = chankiu.clean_string(content.find("h2").contents[0])
+    address = chankiu.clean_string(content.p.next).splitlines()[0]
+    t_capacity_text = str(Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[2]').extract())
+    t_capacity_text = chankiu.clean_string((t_capacity_text))
+    t_capacity = 0
+    t_rating = 0
+    t_rating_url = str(Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[2]').extract())
+    toddler_program = {'capacity': t_capacity, 'rating': t_rating, 'rating_url': t_rating_url}
+    p_capactiy = 0
+    p_rating = 0
+    p_rating_url = ""
+    preschool_program = {'capacity': p_capactiy, 'rating': p_rating, 'rating_url': p_rating_url};
+    contact_info = chankiu.clean_string(str(content.find(class_='nudge')))
 
-    return {'name': name,
+    return {'url': url,
+            'name': name,
             'address': address,
-            'intro': intro,
-            'toddler_rating': toddler_rating,
+            'toddler_program': toddler_program,
+            'preschool_program': preschool_program,
             'contact_info': contact_info,
-            'more_info': more_info,
-            'program_support': program_support,
             'content': content
             }
 
