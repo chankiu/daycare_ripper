@@ -105,19 +105,20 @@ def get_details_from_index(index_url, log):
 if __name__ == "__main__":
     log.info("Ripping childcare data")
 
-    log.info("Get All Index Links")
-    all_index_links_az = []
-    for index_link in get_az_links("https://www.toronto.ca/data/children/dmc/a2z/a2za.html", log):
-        all_index_links_az += get_az_links(index_link, log)
+    # log.info("Get All Index Links")
+    # all_index_links_az = []
+    # for index_link in get_az_links("https://www.toronto.ca/data/children/dmc/a2z/a2za.html", log):
+    #     all_index_links_az += get_az_links(index_link, log)
+    #
+    # all_detail_links = []
+    # for links in all_index_links_az:
+    #     all_detail_links += get_links_from_index(links, log)
+    #
+    # log.info("Get all detail links")
+    # for detail_links in all_detail_links:
+    #     print(detail_links)
 
-    all_detail_links = []
-    for links in all_index_links_az:
-        all_detail_links += get_links_from_index(links, log)
-
-    log.info("Get all detail links")
-    for detail_links in all_detail_links:
-        print(detail_links)
-
+    print(get_details("https://www.toronto.ca/data/children/dmc/a2z/../webreg/gcreg4186.html", log))
 
 
 
