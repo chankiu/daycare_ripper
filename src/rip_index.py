@@ -45,19 +45,44 @@ def get_details(url, log):
     soup = BeautifulSoup(r.text, 'html.parser')
     content = soup.find(class_='content-page')
 
-    name = chankiu.clean_string(content.find("h2").contents[0])
-    address = chankiu.clean_string(content.p.next).splitlines()[0]
-    t_capacity_text = str(Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[2]').extract())
-    t_capacity_text = chankiu.clean_string((t_capacity_text))
-    t_capacity = 0
-    t_rating = 0
-    t_rating_url = str(Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[2]').extract())
-    toddler_program = {'capacity': t_capacity, 'rating': t_rating, 'rating_url': t_rating_url}
-    p_capactiy = 0
-    p_rating = 0
-    p_rating_url = ""
-    preschool_program = {'capacity': p_capactiy, 'rating': p_rating, 'rating_url': p_rating_url};
-    contact_info = chankiu.clean_string(str(content.find(class_='nudge')))
+    try:
+        name = chankiu.clean_string(content.find("h2").contents[0])
+        address = chankiu.clean_string(content.p.next).splitlines()[0]
+    except (RuntimeError, TypeError, NameError) as e:
+        name = "na"
+        address = "na"
+        log.warn("Error in name and address")
+        log.debug(e)
+
+    try:
+        t_capacity = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[2]/text()').extract()[0].strip()
+        t_rating = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[3]/a/text()').extract()[0].strip()
+        t_rating_url = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[2]/td[1]/a/@href').extract()[0].strip()
+        toddler_program = {'capacity': t_capacity, 'rating': t_rating, 'rating_url': t_rating_url}
+    except (RuntimeError, TypeError, NameError) as e:
+        toddler_program = {'capacity': 0, 'rating': 0, 'rating_url': ""}
+        log.warn("Error with Toddler data")
+        log.debug(e)
+
+    try:
+        p_capacity = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[3]/td[2]/text()').extract()[0].strip()
+        p_rating = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[3]/td[3]/a/text()').extract()[0].strip()
+        p_rating_url = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[2]/div/table[1]/tbody/tr[3]/td[1]/a/@href').extract()[0].strip()
+        preschool_program = {'capacity': p_capacity, 'rating': p_rating, 'rating_url': p_rating_url}
+    except (RuntimeError, TypeError, NameError) as e:
+        preschool_program = {'capacity': 0, 'rating': 0, 'rating_url': ""}
+        log.warn("Error with Preschool data")
+        log.debug(e)
+
+    try:
+        contact_info = Selector(text=r.text).xpath('//*[@id="pfrComplexDescr_sml"]/div[3]/ul/li/text()').extract()[0].strip()
+        contact_info = re.sub('[^a-zA-Z0-9\n\.]', ' ', contact_info)
+        contact_info = re.sub(' +',' ', contact_info)
+    except (RuntimeError, TypeError, NameError):
+        contact_info = "na"
+        log.warn("Error in contact info")
+        log.debug(e)
+
 
     return {'url': url,
             'name': name,
@@ -65,23 +90,35 @@ def get_details(url, log):
             'toddler_program': toddler_program,
             'preschool_program': preschool_program,
             'contact_info': contact_info,
-            'content': content
+            'content': ""
             }
 
+
+def get_details_from_index(index_url, log):
+    all_details = []
+    for index_link in get_az_links(index_url, log):
+        all_details += get_details(index_link, log)
+
+    return all_details
 
 
 if __name__ == "__main__":
     log.info("Ripping childcare data")
 
-    # all_links_az = []
-    # starting_point_url = "https://www.toronto.ca/data/children/dmc/a2z/a2za.html"
-    # all_indexs_links = get_az_links(starting_point_url, log)
-    # for index_link in all_indexs_links:
-    #    all_links_az += index_link
+    log.info("Get All Index Links")
+    all_index_links_az = []
+    for index_link in get_az_links("https://www.toronto.ca/data/children/dmc/a2z/a2za.html", log):
+        all_index_links_az += get_az_links(index_link, log)
 
-    #print(len(all_links_az))
+    all_detail_links = []
+    for links in all_index_links_az:
+        all_detail_links += get_links_from_index(links, log)
 
-    print(get_details("https://www.toronto.ca/data/children/dmc/webreg/gcreg1288.html", log))
+    log.info("Get all detail links")
+    for detail_links in all_detail_links:
+        print(detail_links)
+
+
 
 
 
